@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+
+    <head>
+        <css src="Unzer_PAPI::css/unzer.css"/>
+    </head>
+
+    <body>
+        <referenceBlock name="checkout.payment.methods">
+
+            <!-- 💳 Cards -->
+            <block name="checkout.payment.method.unzer_cards"
+                   as="unzer_cards"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/cards.phtml"
+            />
+
+            <!-- 💳 Cards Vault -->
+            <block name="checkout.payment.method.unzer_cards_vault"
+                   as="unzer_cards_vault"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/cards_vault.phtml"
+            />
+
+            <!-- 🏦 Klarna -->
+            <block name="checkout.payment.method.unzer_klarna"
+                   as="unzer_klarna"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/klarna.phtml"
+            />
+
+            <!-- 💰 PayLater (Direct Debit, Installment, Invoice, Invoice B2B) -->
+            <block name="checkout.payment.method.unzer_paylater_direct_debit"
+                   as="unzer_paylater_direct_debit"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/paylater_direct_debit.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_paylater_installment"
+                   as="unzer_paylater_installment"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/paylater_installment.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_paylater_invoice"
+                   as="unzer_paylater_invoice"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/paylater_invoice.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_paylater_invoice_b2b"
+                   as="unzer_paylater_invoice_b2b"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/paylater_invoice_b2b.phtml"
+            />
+
+            <!-- 💳 Ideal -->
+            <block name="checkout.payment.method.unzer_ideal"
+                   as="unzer_ideal"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/ideal.phtml"
+            />
+
+            <!-- 💳 PayPal -->
+            <block name="checkout.payment.method.unzer_paypal"
+                   as="unzer_paypal"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/paypal.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_paypal_vault"
+                   as="unzer_paypal_vault"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/paypal_vault.phtml"
+            />
+
+            <!-- 🌍 Open Banking / EPS / Google Pay -->
+            <block name="checkout.payment.method.unzer_open_banking"
+                   as="unzer_open_banking"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/open_banking.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_eps"
+                   as="unzer_eps"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/eps.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_googlepay"
+                   as="unzer_googlepay"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/googlepay.phtml"
+            />
+
+            <!-- 🧾 Prepayment / Direct Debit -->
+            <block name="checkout.payment.method.unzer_prepayment"
+                   as="unzer_prepayment"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/prepayment.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_direct_debit"
+                   as="unzer_direct_debit"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/direct_debit.phtml"
+            />
+
+            <!-- 💳 Sepa Vault -->
+            <block name="checkout.payment.method.unzer_direct_debit_vault"
+                   as="unzer_direct_debit_vault"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/direct_debit_vault.phtml"
+            />
+
+            <!-- 💳 Regional methods -->
+            <block name="checkout.payment.method.unzer_bancontact"
+                   as="unzer_bancontact"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/bancontact.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_przelewy24"
+                   as="unzer_przelewy24"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/przelewy24.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_twint"
+                   as="unzer_twint"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/twint.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_wechatpay"
+                   as="unzer_wechatpay"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/wechatpay.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_alipay"
+                   as="unzer_alipay"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/alipay.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_applepayv2"
+                   as="unzer_applepayv2"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/applepayv2.phtml"
+            />
+
+            <block name="checkout.payment.method.unzer_wero"
+                   as="unzer_wero"
+                   template="Unzer_HyvaCheckout::payment/method-renderer/wero.phtml"
+            />
+
+        </referenceBlock>
+    </body>
+</page>

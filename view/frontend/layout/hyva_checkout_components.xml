@@ -1,0 +1,287 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="magewire.plugin.scripts">
+
+            <!-- Cards -->
+            <block name="checkout.payment.methods.after.unzer_cards"
+                   as="unzer_cards_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Cards</argument>
+                    <argument name="method" xsi:type="string">unzer_cards</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_cards</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-card</argument>
+                    <argument name="supportsVault" xsi:type="boolean">true</argument>
+                </arguments>
+            </block>
+
+            <!-- Cards Vault -->
+            <block name="checkout.payment.methods.after.unzer_cards_vault"
+                   as="unzer_cards_vault_after"
+                   template="Unzer_HyvaCheckout::payment/handler/vault.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\CardsVault</argument>
+                    <argument name="method" xsi:type="string">unzer_cards_vault</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_cards_vault</argument>
+                </arguments>
+            </block>
+
+            <!-- Klarna -->
+            <block name="checkout.payment.methods.after.unzer_klarna"
+                   as="unzer_klarna_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Klarna</argument>
+                    <argument name="method" xsi:type="string">unzer_klarna</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_klarna</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-klarna</argument>
+                </arguments>
+            </block>
+
+            <!-- iDEAL -->
+            <block name="checkout.payment.methods.after.unzer_ideal"
+                   as="unzer_ideal_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Ideal</argument>
+                    <argument name="method" xsi:type="string">unzer_ideal</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_ideal</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-ideal</argument>
+                </arguments>
+            </block>
+
+            <!-- Bancontact -->
+            <block name="checkout.payment.methods.after.unzer_bancontact"
+                   as="unzer_bancontact_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Bancontact</argument>
+                    <argument name="method" xsi:type="string">unzer_bancontact</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_bancontact</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-bancontact</argument>
+                </arguments>
+            </block>
+
+            <!-- EPS -->
+            <block name="checkout.payment.methods.after.unzer_eps"
+                   as="unzer_eps_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Eps</argument>
+                    <argument name="method" xsi:type="string">unzer_eps</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_eps</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-eps</argument>
+                </arguments>
+            </block>
+
+            <!-- Direct Debit -->
+            <block name="checkout.payment.methods.after.unzer_direct_debit"
+                   as="unzer_direct_debit_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\DirectDebit</argument>
+                    <argument name="method" xsi:type="string">unzer_direct_debit</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_direct_debit</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-sepa-direct-debit</argument>
+                    <argument name="supportsVault" xsi:type="boolean">true</argument>
+                </arguments>
+            </block>
+
+            <!-- Direct Debit Vault -->
+            <block name="checkout.payment.methods.after.unzer_direct_debit_vault"
+                   as="unzer_direct_debit_vault_after"
+                   template="Unzer_HyvaCheckout::payment/handler/vault.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\DirectDebitVault</argument>
+                    <argument name="method" xsi:type="string">unzer_direct_debit_vault</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_direct_debit_vault</argument>
+                </arguments>
+            </block>
+
+            <!-- Open Banking -->
+            <block name="checkout.payment.methods.after.unzer_open_banking"
+                   as="unzer_open_banking_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\OpenBanking</argument>
+                    <argument name="method" xsi:type="string">unzer_open_banking</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_open_banking</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-open-banking</argument>
+                </arguments>
+            </block>
+
+            <!-- Paylater Direct Debit -->
+            <block name="checkout.payment.methods.after.unzer_paylater_direct_debit"
+                   as="unzer_paylater_direct_debit_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\PaylaterDirectDebit</argument>
+                    <argument name="method" xsi:type="string">unzer_paylater_direct_debit</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_paylater_direct_debit</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-paylater-direct-debit</argument>
+                </arguments>
+            </block>
+
+            <!-- Paylater Installment -->
+            <block name="checkout.payment.methods.after.unzer_paylater_installment"
+                   as="unzer_paylater_installment_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\PaylaterInstallment</argument>
+                    <argument name="method" xsi:type="string">unzer_paylater_installment</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_paylater_installment</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-paylater-installment</argument>
+                </arguments>
+            </block>
+
+            <!-- Paylater Invoice -->
+            <block name="checkout.payment.methods.after.unzer_paylater_invoice"
+                   as="unzer_paylater_invoice_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\PaylaterInvoice</argument>
+                    <argument name="method" xsi:type="string">unzer_paylater_invoice</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_paylater_invoice</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-paylater-invoice</argument>
+                </arguments>
+            </block>
+
+            <!-- Paylater Invoice B2B -->
+            <block name="checkout.payment.methods.after.unzer_paylater_invoice_b2b"
+                   as="unzer_paylater_invoice_b2b_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\PaylaterInvoiceB2b</argument>
+                    <argument name="method" xsi:type="string">unzer_paylater_invoice_b2b</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_paylater_invoice_b2b</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-paylater-invoice</argument>
+                </arguments>
+            </block>
+
+            <!-- Apple Pay v2 -->
+            <block name="checkout.payment.methods.after.unzer_applepayv2"
+                   as="unzer_applepayv2_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\ApplePayV2</argument>
+                    <argument name="method" xsi:type="string">unzer_applepayv2</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_applepayv2</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-apple-pay</argument>
+                    <argument name="selfButton" xsi:type="boolean">true</argument>
+                </arguments>
+            </block>
+
+            <!-- Google Pay -->
+            <block name="checkout.payment.methods.after.unzer_googlepay"
+                   as="unzer_googlepay_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\GooglePay</argument>
+                    <argument name="method" xsi:type="string">unzer_googlepay</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_googlepay</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-google-pay</argument>
+                    <argument name="selfButton" xsi:type="boolean">true</argument>
+                </arguments>
+            </block>
+
+            <!-- PayPal -->
+            <block name="checkout.payment.methods.after.unzer_paypal"
+                   as="unzer_paypal_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Paypal</argument>
+                    <argument name="method" xsi:type="string">unzer_paypal</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_paypal</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-paypal</argument>
+                    <argument name="supportsVault" xsi:type="boolean">true</argument>
+                </arguments>
+            </block>
+
+            <!-- PayPal Vault -->
+            <block name="checkout.payment.methods.after.unzer_paypal_vault"
+                   as="unzer_paypal_vault_after"
+                   template="Unzer_HyvaCheckout::payment/handler/vault.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\PaypalVault</argument>
+                    <argument name="method" xsi:type="string">unzer_paypal_vault</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_paypal_vault</argument>
+                </arguments>
+            </block>
+
+            <!-- Prepayment -->
+            <block name="checkout.payment.methods.after.unzer_prepayment"
+                   as="unzer_prepayment_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Prepayment</argument>
+                    <argument name="method" xsi:type="string">unzer_prepayment</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_prepayment</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-prepayment</argument>
+                </arguments>
+            </block>
+
+            <!-- Przelewy24 -->
+            <block name="checkout.payment.methods.after.unzer_przelewy24"
+                   as="unzer_przelewy24_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Przelewy24</argument>
+                    <argument name="method" xsi:type="string">unzer_przelewy24</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_przelewy24</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-przelewy24</argument>
+                </arguments>
+            </block>
+
+            <!-- TWINT -->
+            <block name="checkout.payment.methods.after.unzer_twint"
+                   as="unzer_twint_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Twint</argument>
+                    <argument name="method" xsi:type="string">unzer_twint</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_twint</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-twint</argument>
+                </arguments>
+            </block>
+
+            <!-- WeChat Pay -->
+            <block name="checkout.payment.methods.after.unzer_wechatpay"
+                   as="unzer_wechatpay_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Wechatpay</argument>
+                    <argument name="method" xsi:type="string">unzer_wechatpay</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_wechatpay</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-wechatpay</argument>
+                </arguments>
+            </block>
+
+            <!-- Alipay -->
+            <block name="checkout.payment.methods.after.unzer_alipay"
+                   as="unzer_alipay_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Alipay</argument>
+                    <argument name="method" xsi:type="string">unzer_alipay</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_alipay</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-alipay</argument>
+                </arguments>
+            </block>
+
+            <!-- Wero -->
+            <block name="checkout.payment.methods.after.unzer_wero"
+                   as="unzer_wero_after"
+                   template="Unzer_HyvaCheckout::payment/handler/base.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Wero</argument>
+                    <argument name="method" xsi:type="string">unzer_wero</argument>
+                    <argument name="mountID" xsi:type="string">unzer-component-unzer_wero</argument>
+                    <argument name="paymentCode" xsi:type="string">unzer-wero</argument>
+                </arguments>
+            </block>
+
+        </referenceContainer>
+    </body>
+</page>

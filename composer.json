@@ -1,0 +1,23 @@
+{
+    "name": "unzerdev/magento2-hyva-checkout",
+    "description": "Hyvä Checkout Compatibility module for Unzer PAPI Payments",
+    "type": "magento2-module",
+    "license": [
+        "OSL-3.0",
+        "AFL-3.0"
+    ],
+    "require": {
+        "magento/framework": "*",
+        "hyva-themes/magento2-hyva-checkout": "*",
+        "unzerdev/magento2": "*",
+      "ext-json": "*"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Unzer\\HyvaCheckout\\": ""
+        }
+    }
+}

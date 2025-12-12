@@ -1,0 +1,164 @@
+<?php
+/** @var \Hyva\Theme\ViewModel\HyvaCsp|null $hyvaCsp */
+/** @var \Magento\Framework\View\Element\Template $block */
+/** @var \Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Vault $magewire */
+
+/** Fetch arguments passed in hyva_checkout_components.xml */
+$magewire = $block->getData('magewire') ?? '';
+$method = $block->getData('method') ?? '';
+$mountId = $block->getData('mountID') ?? '';
+$tokens = $magewire->getTokens();
+?>
+
+<script>
+    //# sourceURL=<?= $method ?>.js
+    (() => {
+        /** Payment method identifiers */
+        const METHOD = '<?= $method ?>';
+        const MOUNT_ID = '<?= $mountId ?>';
+
+        /** Tokens from backend (each token contains: public_hash, brand, masked, expires, email) */
+        const TOKENS = <?= json_encode($tokens, JSON_UNESCAPED_SLASHES) ?>;
+
+        let selectedHash = null;
+        let isActive = false;
+
+        /**
+         * Render stored card list dynamically
+         * Creates one radio button per saved card and binds its change event
+         */
+        function renderTokenList(mountEl) {
+            mountEl.innerHTML = '';
+
+            // Main wrapper for token list (slightly indented below "Stored Credit Card / Debit Card")
+            const wrap = document.createElement('div');
+            wrap.className = 'mt-3 ml-8 space-y-3';
+
+            // Show fallback message if no tokens found
+            if (!TOKENS || TOKENS.length === 0) {
+                const p = document.createElement('p');
+                p.className = 'text-sm text-gray-600';
+                p.textContent = 'No stored methods found for your account.';
+                wrap.appendChild(p);
+                mountEl.appendChild(wrap);
+                return;
+            }
+
+            // Container for token radio buttons
+            const group = document.createElement('div');
+            group.setAttribute('role', 'radiogroup');
+            group.className = 'space-y-2';
+
+            TOKENS.forEach((t, idx) => {
+                const id = METHOD + `${idx}`;
+
+                // Label acts as clickable area around radio input + card info
+                const row = document.createElement('label');
+                row.htmlFor = id;
+                row.className = [
+                    'flex items-center gap-3 cursor-pointer',
+                    'rounded-2xl border px-4 py-3 transition',
+                    'bg-white/60 hover:bg-white focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500'
+                ].join(' ');
+
+                // Radio input for selecting this token
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = METHOD + '_token';
+                input.id = id;
+                input.value = t.public_hash;
+                input.className = 'h-4 w-4';
+
+                // On change — send selected hash to Magewire backend
+                input.addEventListener('change', async () => {
+                    selectedHash = t.public_hash;
+                    try {
+                        const cmp = Magewire.find('<?= $block->escapeJs($block->getNameInLayout()) ?>');
+                        if (cmp) await cmp.call('setVaultPaymentData', selectedHash);
+                    } catch (e) {
+                        console.warn('Failed to set public hash:', e);
+                    }
+                });
+
+                // Text showing brand, masked digits, and expiry
+                const txt = document.createElement('div');
+                txt.className = 'text-sm ml-2';
+
+                let textContent = '';
+                if(METHOD === 'unzer_paypal_vault') {
+                    textContent = t.email || 'PayPal Account';
+                }
+
+                if(METHOD === 'unzer_cards_vault') {
+                    textContent = `${t.brand || 'Card'} ${t.masked || ''} ${t.expires ? `(${t.expires})` : ''}`;
+                }
+
+                if(METHOD === 'unzer_direct_debit_vault') {
+                    const holder = t.account_holder || 'Account holder';
+                    const iban   = t.masked_iban || '';
+                    textContent = iban ? `${holder} - ${iban}` : holder;
+                }
+
+                txt.textContent = textContent;
+
+                // Append elements
+                row.appendChild(input);
+                row.appendChild(txt);
+                group.appendChild(row);
+            });
+
+            wrap.appendChild(group);
+            mountEl.appendChild(wrap);
+
+            // Auto-select the first token for convenience
+            if (TOKENS.length > 0) {
+                const first = wrap.querySelector(`input[name="${METHOD}_token"]`);
+                if (first && !selectedHash) {
+                    first.checked = true;
+                    first.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        }
+
+        /**
+         * Hyvä Checkout payment method activation
+         * Renders the stored token list and validates selection
+         */
+        window.addEventListener('checkout:payment:method-activate', (e) => {
+            isActive = e.detail?.method === METHOD;
+            if (!isActive) {
+                document.querySelector('button[x-bind^="buttonPlaceOrder"]')?.classList.remove('hidden')
+                return;
+            }
+
+            const mountEl = document.getElementById(MOUNT_ID);
+            if (!mountEl) return;
+
+            hyvaCheckout.payment.activate(
+                METHOD,
+                {
+                    /** Called when the payment method is selected */
+                    async initialize() {
+                        renderTokenList(mountEl);
+                        document.querySelector('button[x-bind^="buttonPlaceOrder"]')?.classList.remove('hidden');
+                    },
+
+                    /** Called before placing order to validate user input */
+                    async validate() {
+                        if (!selectedHash) {
+                            hyvaCheckout.payment.dispatchExceptionMessage('Please select a saved payment method.');
+                            return false;
+                        }
+                        // The public hash has already been sent to Magewire — validation OK
+                        return true;
+                    }
+                },
+                mountEl
+            );
+        });
+    })();
+</script>
+
+<?php if (isset($hyvaCsp) && $hyvaCsp instanceof \Hyva\Theme\ViewModel\HyvaCsp): ?>
+    <?php $hyvaCsp->registerInlineScript(); ?>
+<?php endif; ?>

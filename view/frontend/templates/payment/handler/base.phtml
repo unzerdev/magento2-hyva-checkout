@@ -1,0 +1,542 @@
+<?php
+/** @var \Hyva\Theme\ViewModel\HyvaCsp|null $hyvaCsp */
+/** @var \Magento\Framework\View\Element\Template $block */
+/** @var \Unzer\HyvaCheckout\Magewire\Checkout\Payment\Method\Base $magewire */
+/** Fetch arguments passed in hyva_checkout_components.xml */
+$magewire = $block->getData('magewire') ?? '';
+$method = $block->getData('method') ?? '';
+$mountId = $block->getData('mountID') ?? '';
+$paymentCode = $block->getData('paymentCode') ?? '';
+$supportsVault = $block->getData('supportsVault') ?? false;
+$selfButton = $block->getData('selfButton') ?? false;
+?>
+<script>
+    //# sourceURL=<?= $method ?>.js
+    (() => {
+        /** Payment method code and DOM mount ID */
+        const METHOD = '<?= $method ?>';
+        const MOUNT_ID = '<?= $mountId ?>';
+        const PAYMENT_CODE = '<?= $paymentCode ?>';
+        const SUPPORTS_VAULT = '<?= $supportsVault ?>';
+
+        // IDs for the "Save for later" checkbox UI
+        const SAVE_CB_ID = `${PAYMENT_CODE}-save-checkbox`;
+        const SAVE_TEXT_ID = `${PAYMENT_CODE}-save-typography`;
+
+        // Whether vault is enabled (computed in Magewire\Cards::mount())
+        const IS_VAULT_ENABLED = <?= $magewire->isVaultEnabled ? 'true' : 'false' ?>;
+        const SELF_BUTTON = <?= $selfButton ? 'true' : 'false'  ?>;
+
+        const COMPONENT_NAME = '<?= $block->escapeJs($block->getNameInLayout()) ?>';
+        const IS_GOOGLE_PAY = METHOD === 'unzer_googlepay';
+        const IS_APPLE_PAY = METHOD === 'unzer_applepayv2';
+
+        /** Static configuration values from Magewire backend */
+        const CFG = {
+            publicKey: '<?= $block->escapeJs($magewire->publicKey) ?>',
+            locale: '<?= $block->escapeJs($magewire->locale) ?>',
+            enableClickToPay: <?= $paymentCode === 'unzer-card'
+                    ? "'" . $block->escapeJs($magewire->methodConfig['enable_click_to_pay'] ?? '0') . "'"
+                    : "'0'"
+                    ?>
+        };
+
+        let GOOGLE_PAY_DATA = {};
+        let APPLE_PAY_DATA = {};
+
+        if (IS_GOOGLE_PAY) {
+            <?php
+            $methodConfig = $magewire->methodConfig ?? [];
+            $config = [
+                    'gatewayMerchantId' => (string)($methodConfig['unzer_channel_id'] ?? ''),
+                    'merchantInfo' => [
+                            'merchantId' => (string)($methodConfig['merchant_id'] ?? ''),
+                            'merchantName' => (string)($methodConfig['merchant_name'] ?? ''),
+                    ],
+                    'buttonOptions' => [
+                            'buttonColor' => (string)($methodConfig['button_color'] ?? 'default'),
+                            'buttonRadius' => (string)($methodConfig['button_border_radius'] ?? '2'),
+                            'buttonSizeMode' => (string)($methodConfig['button_size_mode'] ?? 'fill'),
+                    ],
+                    'allowedCardNetworks' => (array)($methodConfig['allowed_card_networks'] ?? []),
+                    'allowCreditCards' => isset($methodConfig['allow_credit_cards']) && (string)$methodConfig['allow_credit_cards'] === '1',
+                    'allowPrepaidCards' => isset($methodConfig['allow_prepaid_cards']) && (string)$methodConfig['allow_prepaid_cards'] === '1',
+                    'countryCode' => (string)($methodConfig['country_code'] ?? ''),
+            ];
+            ?>
+            GOOGLE_PAY_DATA = <?= json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+        }
+
+        if (IS_APPLE_PAY) {
+            <?php
+            $methodConfig = $magewire->methodConfig ?? [];
+            $applePayConfig = [
+                    'supportedNetworks' => (array)($methodConfig['supportedNetworks'] ?? []),
+                    'merchantCapabilities' => (array)($methodConfig['merchantCapabilities'] ?? []),
+                    'label' => (string)($methodConfig['label'] ?? 'Order'),
+            ];
+            ?>
+            APPLE_PAY_DATA = <?= json_encode($applePayConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+        }
+
+        /** Basket details (numeric amount and currency) */
+        let BASKET = {};
+
+        /** Flattened customer and address data for Unzer component */
+        let CUSTOMER = {};
+
+        /**
+         * Loads Unzer UI components once per page session.
+         * Ensures that custom elements <unzer-payment>, <unzer-PAYMENT_CODE>, and <unzer-checkout> are defined.
+         */
+        async function loadUnzerUiOnce() {
+            if (!window.__unzerUiLoadPromise) {
+                window.__unzerUiLoadPromise = (async () => {
+                    if (!window.customElements?.get?.('unzer-payment')) {
+                        await import('//static-v2.unzer.com/v2/ui-components/index.js');
+                    }
+                    await customElements.whenDefined('unzer-payment');
+                    await customElements.whenDefined(PAYMENT_CODE);
+                    await customElements.whenDefined('unzer-checkout');
+                    return true;
+                })();
+            }
+            return window.__unzerUiLoadPromise;
+        }
+
+        /**
+         * Creates the main <unzer-payment> element with configuration and locale.
+         * Also mounts a <unzer-PAYMENT_CODE> inside it.
+         */
+        function createUnzerPaymentEl() {
+            const el = document.createElement('unzer-payment');
+            el.id = 'unzer-payment-' + METHOD;
+
+            if (CFG.publicKey) el.setAttribute('publicKey', CFG.publicKey);
+            if (CFG.locale) el.setAttribute('locale', CFG.locale);
+
+            const ctpEnabled = (CFG.enableClickToPay === '1' || CFG.enableClickToPay === 1 || CFG.enableClickToPay === true);
+            if (!ctpEnabled) el.setAttribute('disableCTP', 'true');
+
+            el.appendChild(document.createElement(PAYMENT_CODE));
+            return el;
+        }
+
+        /**
+         * Creates <unzer-checkout> wrapper with a hidden submit button.
+         * The hidden button is triggered programmatically during validation.
+         */
+        function createUnzerCheckoutEl() {
+            const el = document.createElement('unzer-checkout');
+            el.id = 'unzer-checkout-' + METHOD;
+
+            // hidden submit button
+            const hiddenBtn = document.createElement('button');
+            hiddenBtn.type = 'submit';
+            hiddenBtn.id = 'unzer-submit-' + METHOD;
+            hiddenBtn.style.display = 'none';
+            el.appendChild(hiddenBtn);
+
+            return el;
+        }
+
+        /**
+         * Populates Apple Pay component components with required data.
+         */
+        function setApplePayData(unzerPaymentEl, tries = 10) {
+            if (!unzerPaymentEl) return;
+
+            const okFn = typeof unzerPaymentEl.setApplePayData === 'function';
+            if (!okFn) {
+                if (tries > 0) setTimeout(() => setApplePayData(unzerPaymentEl, tries - 1), 120);
+                return;
+            }
+
+            const networks = [];
+            for (let i = 0; i < (APPLE_PAY_DATA.supportedNetworks || []).length; i++) {
+                const v = String(APPLE_PAY_DATA.supportedNetworks[i] || '').trim();
+                if (v) networks.push(v.toLowerCase());
+            }
+
+            const caps = (APPLE_PAY_DATA.merchantCapabilities && APPLE_PAY_DATA.merchantCapabilities.length)
+                ? APPLE_PAY_DATA.merchantCapabilities
+                : ['supports3DS'];
+
+            const label = APPLE_PAY_DATA.label || 'Order';
+
+            try {
+                unzerPaymentEl.setApplePayData({
+                    countryCode: CUSTOMER?.billingAddress?.country || '',
+                    currencyCode: BASKET.currencyType,
+                    totalLabel: label,
+                    totalAmount: String(BASKET.amount.toFixed ? BASKET.amount.toFixed(2) : BASKET.amount),
+                    supportedNetworks: networks,
+                    merchantCapabilities: caps,
+                    requiredShippingContactFields: [],
+                    requiredBillingContactFields: [],
+                    total: {
+                        label: label,
+                        amount: String(BASKET.amount.toFixed ? BASKET.amount.toFixed(2) : BASKET.amount)
+                    }
+                });
+            } catch (e) {
+                console.warn('setApplePayData error:', e);
+            }
+        }
+
+        /**
+         * Populates Google Pay component components with basket and customer data.
+         */
+        function setGooglePayData(unzerPaymentEl, tries = 10) {
+            if (!unzerPaymentEl) return;
+
+            const okFn = typeof unzerPaymentEl.setGooglePayData === 'function';
+            if (!okFn) {
+                if (tries > 0) setTimeout(() => setGooglePayData(unzerPaymentEl, tries - 1), 120);
+                return;
+            }
+
+            try {
+                unzerPaymentEl.setGooglePayData({
+                    gatewayMerchantId: GOOGLE_PAY_DATA.gatewayMerchantId,
+                    merchantInfo: {
+                        merchantId: GOOGLE_PAY_DATA.merchantInfo.merchantId,
+                        merchantName: GOOGLE_PAY_DATA.merchantInfo.merchantName
+                    },
+                    transactionInfo: {
+                        countryCode: GOOGLE_PAY_DATA.countryCode,
+                        currencyCode: BASKET.currencyType,
+                        totalPrice: String(BASKET.amount)
+                    },
+                    buttonOptions: {
+                        buttonColor: GOOGLE_PAY_DATA.buttonOptions.buttonColor,
+                        buttonRadius: GOOGLE_PAY_DATA.buttonOptions.buttonRadius,
+                        buttonSizeMode: GOOGLE_PAY_DATA.buttonOptions.buttonSizeMode
+                    },
+                    allowedCardNetworks: GOOGLE_PAY_DATA.allowedCardNetworks || [],
+                    allowCreditCards: !!GOOGLE_PAY_DATA.allowCreditCards,
+                    allowPrepaidCards: !!GOOGLE_PAY_DATA.allowPrepaidCards
+                });
+            } catch (e) {
+                console.warn('setGooglePayData error:', e);
+            }
+        }
+
+        /**
+         * Populates Unzer components with basket and customer data.
+         * Includes retries since component definitions may load asynchronously.
+         */
+        function primePaymentData(unzerPaymentEl, tries = 10) {
+            if (!unzerPaymentEl) {
+                if (tries > 0) {
+                    setTimeout(() => primePaymentData(unzerPaymentEl, tries - 1), 80);
+                }
+                return;
+            }
+            const okBasket = typeof unzerPaymentEl.setBasketData === 'function';
+            const okCustomer = typeof unzerPaymentEl.setCustomerData === 'function';
+            if (okBasket) {
+                try {
+                    unzerPaymentEl.setBasketData(BASKET);
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            if (okCustomer) {
+                try {
+                    unzerPaymentEl.setCustomerData(CUSTOMER);
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            if ((okBasket && okCustomer) || tries <= 0) return;
+
+            // Retry after a short delay - web components can load slightly later
+            setTimeout(() => primePaymentData(unzerPaymentEl, tries - 1), 80);
+        }
+
+        /**
+         * Returns a Promise that resolves once Unzer's onPaymentSubmit completes successfully.
+         * If Unzer returns an error, the promise rejects with a descriptive message.
+         */
+        function makeSubmitPromise(unzerCheckoutEl, componentNameInLayout) {
+            return new Promise((resolve, reject) => {
+                unzerCheckoutEl.onPaymentSubmit = async (resp) => {
+                    try {
+                        const ok = resp?.submitResponse?.success || resp?.submitResponse?.status === 'SUCCESS';
+                        if (!ok) {
+                            const msg = resp?.submitResponse?.message
+                                || resp?.submitResponse?.details?.customerMessage
+                                || 'Payment failed';
+                            hyvaCheckout.payment.dispatchExceptionMessage(msg || 'Payment failed');
+
+                            reject(new Error(msg));
+                            return {status: 'error', message: msg};
+                        }
+
+                        const resourceId = resp?.submitResponse?.data?.id;
+                        if (!resourceId) {
+
+                            reject(new Error('Missing resourceId'));
+                            hyvaCheckout.payment.dispatchExceptionMessage('Payment failed');
+                            return {status: 'error', message: 'Missing resourceId'};
+                        }
+
+                        let customerId = null;
+                        if (resp.customerResponse && resp.customerResponse.success) {
+                            customerId = resp.customerResponse.data.id;
+                        }
+
+                        let threatMetrixId = null;
+                        if (resp.threatMetrixId) {
+                            threatMetrixId = resp.threatMetrixId;
+                        }
+
+                        let additionalData = {
+                            ...(resourceId ? {resourceId: resourceId} : {}),
+                            ...(customerId ? {customerId: customerId} : {}),
+                            ...(threatMetrixId ? {threatMetrixId: threatMetrixId} : {}),
+                        };
+
+                        // Send the resourceId back to the Magewire backend (stored in quote)
+                        await Magewire.find(componentNameInLayout).call('setAdditionalData', additionalData);
+
+                        if (SELF_BUTTON) {
+                            hyvaCheckout.order.place();
+                        }
+
+                        resolve(true);
+                        return {status: 'success'};
+                    } catch (e) {
+                        reject(e);
+                        hideLoader();
+                        return {status: 'error', message: e?.message || 'Payment error'};
+                    }
+                };
+            });
+        }
+
+        let saveForLater = false; // internal flag to track "Save for later" checkbox state
+
+        /**
+         * Displays or hides the vault checkbox depending on whether the vault feature
+         * is enabled for the current payment method.
+         */
+        function showVaultCheckboxIfEnabled() {
+            const cb = document.getElementById(SAVE_CB_ID);
+            const txt = document.getElementById(SAVE_TEXT_ID);
+            if (!cb || !txt) return;
+
+            if (IS_VAULT_ENABLED) {
+                cb.removeAttribute('hidden');
+                txt.textContent = 'Save for later use.';
+            } else {
+                cb.setAttribute('hidden', 'hidden');
+            }
+        }
+
+        /**
+         * Attaches a click listener to the vault checkbox and toggles the "save for later"
+         * flag in the Magento quote. The flag is persisted via a Magewire backend call.
+         */
+        function wireVaultCheckbox(componentNameInLayout) {
+            const cb = document.getElementById(SAVE_CB_ID);
+            if (!cb) return;
+
+            // Persist the flag to quote.additional_information
+            cb.addEventListener('click', async () => {
+                saveForLater = !saveForLater
+                try {
+                    await Magewire.find(componentNameInLayout).call('setSaveForLater', saveForLater);
+                } catch (e) {
+                    console.warn('Failed to set save-for-later flag:', e);
+                }
+            });
+        }
+
+        let currentMethod = null;
+
+        /**
+         * Handles method activation: mounts Unzer components and initializes them once selected.
+         */
+        window.addEventListener('checkout:payment:method-activate', async (e) => {
+            if (e.detail.method !== METHOD) {
+                document.querySelector('button[x-bind^="buttonPlaceOrder"]')?.classList.remove('hidden');
+                currentMethod = null;
+                return;
+            }
+            currentMethod = e.detail?.method || null;
+            await loadUnzerUiOnce();
+
+            const mountEl = document.getElementById(MOUNT_ID);
+            if (!mountEl) return;
+
+            let unzerPaymentEl, unzerCheckoutEl;
+
+            /** Called once the payment method is activated */
+            hyvaCheckout.payment.activate(
+                METHOD,
+                {
+                    async initialize() {
+                        mountEl.innerHTML = '';
+                        await mountUnzerComponents();
+                        document.querySelector('button[x-bind^="buttonPlaceOrder"]')?.classList.remove('hidden');
+                        if (SELF_BUTTON) {
+                            document.querySelector('button[x-bind^="buttonPlaceOrder"]')?.classList.add('hidden');
+                        }
+                        // Vault checkbox UI
+                        if (SUPPORTS_VAULT) {
+                            showVaultCheckboxIfEnabled();
+                            wireVaultCheckbox(COMPONENT_NAME);
+                        }
+                    },
+
+                    /** Called when Hyvä validates the payment step before placing the order */
+                    async validate() {
+                        try {
+                            if (SELF_BUTTON) {
+                                return true;
+                            }
+
+                            let unzerCheckoutEl = document.getElementById('unzer-checkout-' + METHOD);
+                            if (!unzerCheckoutEl) return false;
+
+                            const submitPromise = makeSubmitPromise(unzerCheckoutEl, COMPONENT_NAME);
+
+                            // 🔒 Pre-check: if button is disabled, do not try submit
+                            const unzerBtn = unzerCheckoutEl?.shadowRoot?.querySelector('button')
+                                || unzerCheckoutEl?.querySelector('button');
+                            if (unzerBtn?.disabled) {
+                                console.warn(`[${PAYMENT_CODE}] form not complete.`);
+                                hyvaCheckout.payment.dispatchExceptionMessage('Please fill in all payment details before placing the order.');
+                                return false;
+                            }
+
+                            // ✅ proceed with submit
+                            unzerCheckoutEl.querySelector('#' + CSS.escape('unzer-submit-' + METHOD))?.click();
+
+                            showLoader()
+                            await submitPromise;
+                            hideLoader();
+                            return true;
+                        } catch (err) {
+                            hideLoader()
+                            hyvaCheckout.payment.dispatchExceptionMessage(err?.message || 'Payment failed');
+                            return false;
+                        }
+                    }
+                },
+                mountEl
+            );
+        });
+
+        /**
+         * Refresh data on shipping method change.
+         */
+        window.addEventListener('checkout:shipping:method-activate', async (event) => {
+            if (currentMethod === METHOD) {
+                let mountEl = document.getElementById(MOUNT_ID);
+                mountEl.innerHTML = '';
+                await mountUnzerComponents();
+            }
+        })
+
+        /**
+         * Displays Magewire loader spinner while Unzer is processing payment.
+         */
+        function showLoader() {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('magewire:loader:start'))
+            }, 0);
+        }
+
+        /**
+         * Hides Magewire loader spinner while Unzer is processing payment.
+         */
+        function hideLoader() {
+            window.dispatchEvent(new Event('magewire:loader:done'));
+        }
+
+        /**
+         * Refresh basket and customer data with Magewire.
+         */
+        async function mountUnzerComponents() {
+            const cmp = Magewire.find(COMPONENT_NAME);
+
+            if (!cmp) {
+                console.warn(`[${PAYMENT_CODE}] Magewire component not found:`, COMPONENT_NAME);
+                return;
+            }
+
+            await cmp.call('refreshSnapshot');
+            const snap = cmp.get('snapshot');
+            if (!snap) {
+                console.warn(`[${METHOD}] snapshot missing after refresh`);
+                return;
+            }
+
+            BASKET = {amount: Number(snap.grandTotal), currencyType: snap.currency};
+            CUSTOMER = {
+                firstname: snap.billing?.firstname || '',
+                lastname: snap.billing?.lastname || '',
+                email: snap.email || '',
+                billingAddress: {
+                    name: `${snap.billing?.firstname || ''} ${snap.billing?.lastname || ''}`.trim(),
+                    street: snap.billing?.street || '',
+                    zip: snap.billing?.postcode || '',
+                    city: snap.billing?.city || '',
+                    country: snap.billing?.country || ''
+                },
+                shippingAddress: {
+                    name: `${snap.shipping?.firstname || ''} ${snap.shipping?.lastname || ''}`.trim(),
+                    street: snap.shipping?.street || '',
+                    zip: snap.shipping?.postcode || '',
+                    city: snap.shipping?.city || '',
+                    country: snap.shipping?.country || ''
+                },
+                birthDate: snap.birthDate || '',
+                company: snap.company,
+                customerSettings: {
+                    type: snap.customerType || ''
+                }
+            };
+
+            let unzerPaymentEl, unzerCheckoutEl;
+            let mountEl = document.getElementById(MOUNT_ID);
+            mountEl.innerHTML = '';
+            unzerPaymentEl = createUnzerPaymentEl();
+            unzerCheckoutEl = createUnzerCheckoutEl();
+
+            if (IS_GOOGLE_PAY) {
+                requestAnimationFrame(() => setGooglePayData(unzerPaymentEl));
+                let response = makeSubmitPromise(unzerCheckoutEl, COMPONENT_NAME);
+            }
+
+            if (IS_APPLE_PAY) {
+                requestAnimationFrame(() => setApplePayData(unzerPaymentEl));
+                let response = makeSubmitPromise(unzerCheckoutEl, COMPONENT_NAME);
+            }
+            const okBasket = typeof unzerPaymentEl.setBasketData === 'function';
+            const okCustomer = typeof unzerPaymentEl.setCustomerData === 'function';
+            if (okBasket) {
+                try {
+                    unzerPaymentEl.setBasketData(BASKET);
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            if (okCustomer) {
+                try {
+                    unzerPaymentEl.setCustomerData(CUSTOMER);
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            mountEl.appendChild(unzerPaymentEl);
+            mountEl.appendChild(unzerCheckoutEl);
+        }
+    })();
+</script>
+<?php if (isset($hyvaCsp) && $hyvaCsp instanceof \Hyva\Theme\ViewModel\HyvaCsp): ?>
+    <?php $hyvaCsp->registerInlineScript(); ?>
+<?php endif; ?>
